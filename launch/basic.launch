@@ -1,0 +1,30 @@
+<!---->
+<launch>
+	<arg name="robot_name" value="follower"/>
+    <arg name="model" default="burger"/>
+		<!-- Bring up ros vrpn node to broadcast agent's location -->
+	<node pkg="ros_vrpn_client" type="ros_vrpn_client" name="$(arg robot_name)" args="_vrpn_server_ip:=192.168.1.104" output="screen" required="true"/>
+		
+<group ns = "$(arg robot_name)"> -->
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+      <param name="publish_frequency" type="double" value="50.0" />
+      <param name="tf_prefix" value="$(arg robot_name)" />
+
+    </node>
+
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg robot_name) -x 0. -y 0. -z 0. -Y 0. -param robot_description" />
+
+</group> 
+
+
+<arg name="param_file" default="$(find optitrack_to_gazebo)/params/basic_param.yaml" />
+<node pkg="optitrack_to_gazebo" type="optitrack_to_gazebo_node.py" name="optitrack_to_gazebo" >
+	<param name="rigidbody_name" value="$(arg robot_name)" type="str"/>
+    <remap from="pose_stamped" to="$(arg robot_name)/nwu/pose_stamped"/>
+    <rosparam file="$(arg param_file)" command="load"/>
+</node>
+
+</launch>
+
